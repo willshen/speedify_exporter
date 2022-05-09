@@ -39,9 +39,9 @@ func main() {
 		log.Errorf("Failed to register collector: %s", err)
 	}
 	err = prometheus.Register(&SpeedifyCollector{
-		stateMetric:                     prometheus.NewDesc(prometheus.BuildFQName(namespace, "", "state"), "The state of Speedify: 0 (LOGGED_OUT), 1 (LOGGED_IN), 2 (CONNECTED)", nil, nil),
-		adapterPriorityMetric:           prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "priority"), "The priority of the adapter: 0 (never), 1 (always), 2 (secondary), 3 (backup)", []string{"adapterId", "adapterType"}, nil),
-		adapterStateMetric:              prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "state"), "The state of the adapter: 0 (disconnected), 1 (connected)", []string{"adapterId", "adapterType"}, nil),
+		stateMetric:                     prometheus.NewDesc(prometheus.BuildFQName(namespace, "", "state"), "The state of Speedify: 0 (LOGGED_OUT), 1 (LOGGED_IN), 2 (CONNECTED), 3 (OTHERS)", nil, nil),
+		adapterPriorityMetric:           prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "priority"), "The priority of the adapter: 0 (never), 1 (always), 2 (secondary), 3 (backup), 4 (unknown)", []string{"adapterId", "adapterType"}, nil),
+		adapterStateMetric:              prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "state"), "The state of the adapter: 0 (disconnected), 1 (connected), 2 (unknown)", []string{"adapterId", "adapterType"}, nil),
 		adpaterOverlimitRateLimitMetric: prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "overlimit_rate_limit"), "The overlimit rate limit of the adapter.", []string{"adapterId", "adapterType"}, nil),
 		adpaterUsageDailyMetric:         prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "daily_usage"), "The daily data usage of the adapter.", []string{"adapterId", "adapterType"}, nil),
 		adpaterUsageDailyBoostMetric:    prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "daily_usage_boost"), "The daily data usage boost of the adapter.", []string{"adapterId", "adapterType"}, nil),
