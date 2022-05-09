@@ -34,8 +34,11 @@ func main() {
 	// ========================
 	// Regist handler
 	// ========================
-	prometheus.Register(version.NewCollector("speedify_exporter"))
-	prometheus.Register(&SpeedifyCollector{
+	err = prometheus.Register(version.NewCollector("speedify_exporter"))
+	if err != nil {
+		log.Errorf("Failed to register collector: %s", err)
+	}
+	err = prometheus.Register(&SpeedifyCollector{
 		stateMetric:                     prometheus.NewDesc(prometheus.BuildFQName(namespace, "", "state"), "The state of Speedify: 0 (LOGGED_OUT), 1 (LOGGED_IN), 2 (CONNECTED)", nil, nil),
 		adapterPriorityMetric:           prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "priority"), "The priority of the adapter: 0 (never), 1 (always), 2 (secondary), 3 (backup)", []string{"adpterId", "adapterType"}, nil),
 		adapterStateMetric:              prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "state"), "The state of the adapter: 0 (disconnected), 1 (connected)", []string{"adpterId", "adapterType"}, nil),
@@ -45,6 +48,9 @@ func main() {
 		adapterUsageDailyLimitMetric:    prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "daily_usage_limit"), "The daily data usage limit of the adapter.", []string{"adpterId", "adapterType"}, nil),
 		adpaterUsageMonthlyMetric:       prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "monthly_usage"), "The monthly data usage of the adapter.", []string{"adpterId", "adapterType"}, nil),
 		adpaterUsageMonthlyLimitMetric:  prometheus.NewDesc(prometheus.BuildFQName(namespace, "adapter", "monthly_usage_limit"), "The monthly data usage limit of the adapter.", []string{"adpterId", "adapterType"}, nil)})
+	if err != nil {
+		log.Errorf("Failed to register collector: %s", err)
+	}
 
 	// Regist http handler
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +62,7 @@ func main() {
 
 	// start server
 	log.Infof("Starting http server - %s", bind)
-	if err := http.ListenAndServe(bind, nil); err != nil {
+	if err = http.ListenAndServe(bind, nil); err != nil {
 		log.Errorf("Failed to start http server: %s", err)
 	}
 }
@@ -84,8 +90,11 @@ func (collector *SpeedifyCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		log.Errorf("Errored while getting speedify state: %s", err)
 	}
-	state := SpeedifyState{}
-	json.Unmarshal([]byte(out), &state)
+	var state SpeedifyState
+	err = json.Unmarshal([]byte(out), &state)
+	if err != nil {
+		log.Errorf("Errored while parsing speedify state response JSON: %s", err)
+	}
 	ch <- prometheus.MustNewConstMetric(collector.stateMetric, prometheus.GaugeValue, state.getStateMetric())
 
 	out, err = exec.Command(speedify_cli, "show", "adapters").Output()
@@ -93,7 +102,10 @@ func (collector *SpeedifyCollector) Collect(ch chan<- prometheus.Metric) {
 		log.Errorf("Errored while getting speedify adapters: %s", err)
 	}
 	var adapters []Adapter
-	json.Unmarshal([]byte(out), &adapters)
+	err = json.Unmarshal([]byte(out), &adapters)
+	if err != nil {
+		log.Errorf("Errored while parsing speedify show adapters response JSON: %s", err)
+	}
 
 	for _, a := range adapters {
 		ch <- prometheus.MustNewConstMetric(collector.adapterPriorityMetric, prometheus.CounterValue, a.getPriorityMetric(), a.AdapterID, a.Type)
